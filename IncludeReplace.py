@@ -9,17 +9,17 @@
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation; either version 2 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
-#  
+#
 
 
 import wx
@@ -30,36 +30,51 @@ import BasicReplace
 import ConfigParser
 import webbrowser
 
-AUTHOR = "Sylvan Mostert"
-DEBUG = True
-WEBROOT = "C:/Users"
+# Default values, will be replaced by config.cfg or remain if config is invalid
+AUTHOR      = "Sylvan Mostert <smostert.dev@gmail.com>"
+DEBUG       = True
+WEBROOT     = "C:/Users"
 CONFIGFILENAME = "config.cfg"
-XPOSN = 0
-YPOSN = 50
-FILELIMIT = 25
+XPOSN       = 0
+YPOSN       = 50
+FILELIMIT   = 25
 OPENBROWSER = True
-FOCUS = 255
-NOFOCUS = 100
-EXEPATH = os.getcwd()
+FOCUS       = 255
+NOFOCUS     = 100
+EXEPATH     = os.getcwd()
+
 
 
 ######################################################################
+#
+#  name: readconfig
+#  @param filename      Recieves a string representing a filename
+#                       (default 'config.cfg')
+#  @return              None
+#
 def readconfig(filename="config.cfg"):
     '''
     Reads variables from configuration file and stores them in global
-    variables. This function is calle once at start of program.
+    variables. This function is called once at start of program.
     '''
-    global WEBROOT, XPOSN, YPOSN, FILELIMIT, OPENBROWSER, FOCUS, NOFOCUS, EXEPATH
+
+    # get global variables to set
+    global WEBROOT,XPOSN,YPOSN,FILELIMIT,OPENBROWSER,FOCUS,NOFOCUS,EXEPATH
+
+    # try to read config and set global variables
     try:
-        config = ConfigParser.RawConfigParser(allow_no_value=True)
+        config      = ConfigParser.RawConfigParser(allow_no_value=True)
         config.read(filename)
-        WEBROOT = config.get('IncludeReplace', 'path')
-        XPOSN = config.getint('IncludeReplace', 'xposn')
-        YPOSN = config.getint('IncludeReplace', 'yposn')
-        FILELIMIT = config.getint('IncludeReplace', 'filelimit')
+
+        WEBROOT     = config.get('IncludeReplace', 'path')
+        XPOSN       = config.getint('IncludeReplace', 'xposn')
+        YPOSN       = config.getint('IncludeReplace', 'yposn')
+        FILELIMIT   = config.getint('IncludeReplace', 'filelimit')
         OPENBROWSER = config.getboolean('IncludeReplace', 'openbrowser')
-        FOCUS = config.getint('IncludeReplace', 'focus')
-        NOFOCUS = config.getint('IncludeReplace', 'nofocus')
+        FOCUS       = config.getint('IncludeReplace', 'focus')
+        NOFOCUS     = config.getint('IncludeReplace', 'nofocus')
+
+        # make sure FOCUS is within the required range
         if FOCUS < 0 or FOCUS > 255:
             FOCUS = 255
         if FOCUS < 0 or FOCUS > 255:
@@ -70,7 +85,12 @@ def readconfig(filename="config.cfg"):
         if DEBUG: print "%s" % e
         return None
 
+
 ######################################################################
+#
+#  name: errorbox
+#  @param       Recieves a string representing a message to be displayed.
+#
 def errorbox(message="No message!"):
     '''
     Simple error box to display message. Creates simple info box. This
@@ -96,21 +116,25 @@ class FileDropTarget(wx.FileDropTarget):
     def OnDropFiles(self, x, y, filenames):
         global WEBROOT
 
-        #print the number of files dropped.
+        # print the number of files dropped.
         filenumber = len(filenames)
         self.obj.SetInsertionPointEnd()
         self.obj.WriteText("%d file(s) dropped\n\n" % (filenumber))
 
         if filenumber > FILELIMIT:
-            errorbox("Do not add more than %s files!\nYou can change the FILELIMIT in the \'config.cfg\' file." % confsvr.FILELIMIT)
+            errorbox("Do not add more than %s files!" +
+                    "\nYou can change the FILELIMIT in the \'config.cfg\' file."
+                    % confsvr.FILELIMIT)
         else:
             for file in filenames:
-                #BasicReplace will interpret all of the Server Side Includes
+                # BasicReplace will interpret all of the Server Side Includes
                 openpath = BasicReplace.BasicReplace(file, WEBROOT)
-                #print what file was dropped
+
+                # print what file was dropped
                 self.obj.WriteText("%s\n\n" % file)
 
                 if openpath is not None and OPENBROWSER:
+                    # open the path in the web browser
                     webbrowser.open_new(openpath)
                 else:
                     self.obj.WriteText("This file cannot be read!\n\n")
@@ -126,13 +150,16 @@ class MainPanel(wx.Panel):
         wx.Panel.__init__(self, parent=parent, style=wx.NO_BORDER)
 
         self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.text = wx.TextCtrl(self, style=wx.TE_MULTILINE)#|wx.TE_NO_VSCROLL)
-        self.fdt = FileDropTarget(self.text)
+        self.text  = wx.TextCtrl(self, style=wx.TE_MULTILINE)#|wx.TE_NO_VSCROLL)
+        self.fdt   = FileDropTarget(self.text)
+
         self.text.SetDropTarget(self.fdt)
 
         self.dropsizer = wx.BoxSizer(wx.HORIZONTAL)
         self.dropsizer.Add(self.text, proportion=1, flag=wx.EXPAND)
-        self.sizer.Add(self.dropsizer, proportion=1, flag=wx.LEFT|wx.RIGHT|wx.EXPAND)
+        self.sizer.Add(self.dropsizer, proportion=1, flag=wx.LEFT|
+                                                         wx.RIGHT|
+                                                        wx.EXPAND)
 
         self.SetSizer(self.sizer)
 
@@ -143,19 +170,27 @@ class MainFrame(wx.Frame):
     #--------------------------------------------------------------------#
     def __init__(self):
         global XPOSN, YPOSN
+
+        # get width and height of display, and set window dimensions
         displaySize = wx.DisplaySize()
         self.height = (displaySize[1] - 100)
-        self.width = 140
-        self.x = XPOSN
-        self.y = YPOSN
+        self.width  = 140
+        self.x      = XPOSN
+        self.y      = YPOSN
 
-        wx.Frame.__init__(self, parent=None, title="Include Replace", pos=(self.x, self.y), size=(self.width, self.height), style=wx.DEFAULT_FRAME_STYLE|wx.STAY_ON_TOP)
+        # initialize frame
+        wx.Frame.__init__(self, parent=None,
+                                title ="Include Replace",
+                                pos   =(self.x, self.y),
+                                size  =(self.width, self.height),
+                                style =wx.DEFAULT_FRAME_STYLE|wx.STAY_ON_TOP)
+
         self.SetMinSize((140, 130))
+
+        # bind a close event, delete temp files
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         self.SetIcon(icon.icon.GetIcon())
-
-
         self.InitMenu()
         self.Show()
 
@@ -168,11 +203,12 @@ class MainFrame(wx.Frame):
 
     #--------------------------------------------------------------------#
     def InitMenu(self):
-        '''Initialize Menu.'''
+        '''Initialize Menu bar.'''
         menubar = wx.MenuBar()
 
-        fileMenu = wx.Menu()
+        fileMenu       = wx.Menu()
         fileMenu_item3 = wx.MenuItem(fileMenu, 502, 'Reset Posn+Size')
+
         fileMenu.AppendItem(fileMenu_item3)
         self.Bind(wx.EVT_MENU, lambda event: self.OnReset(event), id=502)
 
@@ -181,16 +217,25 @@ class MainFrame(wx.Frame):
 
     #--------------------------------------------------------------------#
     def OnSetFocus(self, event):
+        '''
+        Set the window's transparency if the focus is gained.
+        '''
         INFOCUS = True
         self.SetTransparent(FOCUS)
 
     #--------------------------------------------------------------------#
     def OnKillFocus(self, event):
+        '''
+        Set the window's transparency if the focus is lost.
+        '''
         INFOCUS = False
         self.SetTransparent(NOFOCUS)
 
     #--------------------------------------------------------------------#
     def OnReset(self, event):
+        '''
+        Menu action to reset the size and position.
+        '''
         self.SetSize((self.width, self.height))
         self.SetPosition((self.x, self.y))
 
@@ -211,12 +256,12 @@ class MainFrame(wx.Frame):
 if __name__ == "__main__":
     app = wx.App(0)
     try:
-        #check if configuration file exists
+        # check if configuration file exists
         if os.path.isfile(CONFIGFILENAME):
-            #try to read configuration file
+            # try to read configuration file
             readconfig(CONFIGFILENAME)
 
-            #check if path in configuration file exists
+            # check if path in configuration file exists
             if os.path.exists(WEBROOT):
                 frame = MainFrame()
                 app.MainLoop()
