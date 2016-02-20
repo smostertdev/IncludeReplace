@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Warning</title>
+    <style>
+    .box {
+        position:fixed;
+        height:25px;
+        top:0px;
+        left:0px;
+        right:0px;
+        overflow:hidden;
+        background-color:#FF0000;
+        animation:pulse 3s infinite;
+        transition:1s;
+        color:#FFFFFF;
+        font-weight:900;
+        line-height:25px;
+        text-indent: 50px;
+    }
+
+    .wrapper {
+        position:fixed;
+        height:50px;
+        top:0px;
+        left:0px;
+        right:0px;
+    }
+
+    .wrapper:hover .box {
+        height:0px;
+    }
+
+    @keyframes pulse {
+        0% {background-color:#FF0000;}
+        50% {background-color:#FED391;}
+        100% {background-color:#FF0000;}
+    }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper"><div class="box">REMINDER: This is not the production server.</div></div>
+</body>
+
+</html>
